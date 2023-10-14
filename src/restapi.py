@@ -2,20 +2,19 @@ import requests
 import os
 from flask import session
 from dataclasses import dataclass
+from pydantic import BaseModel
 import json
 from typing import Literal
 
 
-@dataclass
-class UserSession:
+class UserSession(BaseModel):
     access_token: str = None
     expires_in: int = None
     id_token: str = None
     token_type: str = None
 
 
-@dataclass
-class Catalog:
+class Catalog(BaseModel):
     base: str = None
     created: str = None
     id: str = None
@@ -26,8 +25,7 @@ class Catalog:
     updated: str = None
 
 
-@dataclass
-class Asset:
+class Asset(BaseModel):
     created: str = None
     id: str = None
     links: dict = None
@@ -37,8 +35,7 @@ class Asset:
     updated: str = None
 
 
-@dataclass
-class AssetColletion:
+class AssetColletion(BaseModel):
     base: str = None
     last_updated: str = None
     links: dict = None
@@ -112,7 +109,7 @@ class AssetCollectionRenderer:
         for asset in self._collection.resources:
             url = os.path.join(
                 self._base_url,
-                f"assets/{asset.get('id')}/renditions/{rendition_type}"
+                f"assets/{asset.id}/renditions/{rendition_type}"
             )
             response = requests.get(url, headers=self._api_credentials)
             responses.append(response)
