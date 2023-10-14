@@ -1,5 +1,4 @@
 from flask import Flask
-from oauth import url
 
 app = Flask(__name__)
 
