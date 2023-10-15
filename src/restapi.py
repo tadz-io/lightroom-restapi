@@ -1,6 +1,7 @@
 import requests
 import os
 from flask import session
+import flask
 from dataclasses import dataclass
 from pydantic import BaseModel
 import json
@@ -89,11 +90,13 @@ class LightRoomRestApi:
 
 
 class AssetCollectionRenderer:
-
-    def __init__(self, api_config, collection: AssetColletion) -> None:
+    def __init__(
+        self, api_config, collection: AssetColletion
+    ) -> None:
         self._collection = collection
         self._base_url = collection.base
         self._session = load_from_session()
+        self.renditions = None
         self._api_credentials = {
             "X-API-Key": api_config.get("ADOBE_API_KEY"),
             "Authorization": f"Bearer {self._session.access_token}",
@@ -109,8 +112,25 @@ class AssetCollectionRenderer:
         for asset in self._collection.resources:
             url = os.path.join(
                 self._base_url,
-                f"assets/{asset.id}/renditions/{rendition_type}"
+                f"assets/{asset.id}/renditions/{rendition_type}",
             )
-            response = requests.get(url, headers=self._api_credentials)
+            response = requests.get(
+                url, headers=self._api_credentials
+            )
             responses.append(response)
-        return responses
+        self.renditions = responses
+        return self
+
+    def save_images(self):
+        if self.renditions is None:
+            raise ValueError("renditions not available")
+
+        image_urls = []
+        for index, rendition in enumerate(self.renditions):
+            filename = f"image_{index:03}.jpg"
+            with open(
+                os.path.join("static", filename), "wb"
+            ) as img_file:
+                img_file.write(rendition.content)
+            image_urls.append(filename)
+        return image_urls
