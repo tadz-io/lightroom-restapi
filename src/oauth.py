@@ -2,7 +2,8 @@ import os
 import flask
 from flask import jsonify, Response
 import requests
-from six.moves import urllib
+# from six.moves import urllib
+import urllib
 import json
 from restapi import load_from_session, LightRoomRestApi, AssetCollectionRenderer
 
@@ -103,7 +104,7 @@ def catalog():
     light_room = LightRoomRestApi(api_config=app.config)
     catalog = light_room.get_catalog()
 
-    return jsonify(catalog)
+    return catalog.model_dump_json()
 
 @app.route("/assets")
 def assets():
@@ -113,12 +114,11 @@ def assets():
         catalog_id=catalog.id
     )
     renderer = AssetCollectionRenderer(api_config=app.config, collection=assets)
-    renditions = renderer.get_renditions()
-    content_types = [rendition.headers.get('Content-Type') for rendition in renditions]
-    # return jsonify(renderer.get_renditions())
+    image_urls = renderer.get_renditions().save_images()
+
     return flask.render_template(
-            "index.html",
-            response=f"assets: {content_types}",
+            "display_images.html",
+            image_urls=image_urls,
         )
 
 @app.route("/health")
