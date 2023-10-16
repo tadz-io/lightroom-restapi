@@ -5,7 +5,7 @@ import flask
 from dataclasses import dataclass
 from pydantic import BaseModel
 import json
-from typing import Literal
+from typing import Literal, Dict, Optional
 
 
 class UserSession(BaseModel):
@@ -15,12 +15,27 @@ class UserSession(BaseModel):
     token_type: str = None
 
 
+class Rating(BaseModel):
+    date: str = None
+    rating: int = None
+
+
+class Payload(BaseModel):
+    ratings: Optional[Dict[str, Rating]] = None
+
+    def get_rating(self):
+        if self.ratings is None:
+            return 0
+        for _, value in self.ratings.items():
+            return value.rating
+
+
 class Catalog(BaseModel):
     base: str = None
     created: str = None
     id: str = None
     links: dict = None
-    payload: dict = None
+    payload: Payload = None
     subtype: str = None
     type: str = None
     updated: str = None
@@ -29,11 +44,12 @@ class Catalog(BaseModel):
 class Asset(BaseModel):
     created: str = None
     id: str = None
-    links: dict = None
-    payload: dict = None
+    # links: dict = None
+    payload: Payload = None
     subtype: str = None
     type: str = None
     updated: str = None
+    rendition_url: Optional[str] = None
 
 
 class AssetColletion(BaseModel):
@@ -74,7 +90,7 @@ class LightRoomRestApi:
         response = requests.get(url, headers=self._api_credentials)
         json_response = self._to_json(response.text)
         # return json_response
-        return Catalog(**json_response)
+        return Catalog.model_validate(json_response)
 
     def get_assets(self, catalog_id):
         url = os.path.join(
@@ -82,7 +98,8 @@ class LightRoomRestApi:
         )
         response = requests.get(url, headers=self._api_credentials)
         json_response = self._to_json(response.text)
-        return AssetColletion(**json_response)
+        return AssetColletion.model_validate(json_response)
+        # return json_response
 
     def _to_json(self, text):
         # return text
@@ -102,13 +119,16 @@ class AssetCollectionRenderer:
             "Authorization": f"Bearer {self._session.access_token}",
         }
 
+    @property
+    def collection(self):
+        return self._collection
+
     def get_renditions(
         self,
         rendition_type: Literal[
             "thumbnail2x", "fullsize", "640", "1280", "2048", "2560"
         ] = "thumbnail2x",
     ):
-        responses = []
         for asset in self._collection.resources:
             url = os.path.join(
                 self._base_url,
@@ -117,20 +137,19 @@ class AssetCollectionRenderer:
             response = requests.get(
                 url, headers=self._api_credentials
             )
-            responses.append(response)
-        self.renditions = responses
-        return self
+            file_path = self.save_images(response, filename=asset.id)
+            asset.rendition_url = file_path
+        return self.collection
 
-    def save_images(self):
-        if self.renditions is None:
-            raise ValueError("renditions not available")
-
-        image_urls = []
-        for index, rendition in enumerate(self.renditions):
-            filename = f"image_{index:03}.jpg"
-            with open(
-                os.path.join("static", filename), "wb"
-            ) as img_file:
-                img_file.write(rendition.content)
-            image_urls.append(filename)
-        return image_urls
+    def save_images(self, response, filename):
+        file_path = f"{filename}.jpg"
+        with open(os.path.join("static", file_path), "wb") as img_file:
+            img_file.write(response.content)
+        return file_path
+    
+    def get_ratings(self):
+        ratings = []
+        for asset in self._collection.resources:
+            rating = asset.payload.get_rating()
+            ratings.append({asset.id: rating})
+        return ratings
