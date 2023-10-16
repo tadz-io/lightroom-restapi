@@ -6,15 +6,17 @@
 
 .image_container img {
     margin: 0;
+    padding: 0;
+    border: none;
     width: 100%;
     height: 100%;
     object-fit: cover; /* this ensures the image covers the container without distortion */
 }
 
-img, .image_container {
+/* img, .image_container {
     margin: 0;
     padding: 0;
-}
+} */
 
 .image_container {
     margin: 0;
@@ -23,6 +25,13 @@ img, .image_container {
     overflow: hidden; /* hides any part of the image that doesn't fit */
 }
 
-img {
-    display: block;
+.image_container p {
+    margin: 0;
+    padding: 0;
+    border: none;
+    color: black; /* Change to your desired color */
 }
+
+/* img {
+    display: block;
+} */

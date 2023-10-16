@@ -10,10 +10,11 @@
 </head>
 <body>
     <div class="grid">
-        {% for image_url in image_urls %}
-            <div class="image_container">
-                <img src="{{ url_for('static', filename=image_url) }}" alt="Image">
-            </div>
+        {% for asset in assets %}
+            <figure class="image_container">
+                <img src="{{ url_for('static', filename=asset.rendition_url) }}" alt="Image">
+                <figcaption>{{ asset.payload.get_rating() }}</figcaption>
+            </figure>
         {% endfor %}
     </div>
 </body>
