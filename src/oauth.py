@@ -2,10 +2,15 @@ import os
 import flask
 from flask import jsonify, Response
 import requests
+
 # from six.moves import urllib
 import urllib
 import json
-from restapi import load_from_session, LightRoomRestApi, AssetCollectionRenderer
+from restapi import (
+    load_from_session,
+    LightRoomRestApi,
+    AssetCollectionRenderer,
+)
 
 # Start flask app
 app = flask.Flask(__name__)
@@ -84,51 +89,48 @@ def callback():
 
 @app.route("/account")
 def account():
-
-
-    #     # Adobe OAuth2.0 profile url
-    #     catalog_id = "126d1b0b00d14744891ec255f1ca046f"
-    #     asset_id = "1e1aad4964a77c084db0dfe01b0c64b4"
-    #     rendition_type = "thumbnail2x"
-    #     profile_url = "https://lr.adobe.io/v2/account"
-    #     # f"https://lr.adobe.io/v2/catalogs/{catalog_id}/assets"
-    #     # profile_url = f"https://lr.adobe.io/v2/catalogs/{catalog_id}/assets/{asset_id}/renditions/{rendition_type}"
-
     light_room = LightRoomRestApi(api_config=app.config)
     account = light_room.get_account_data()
 
     return jsonify(account)
+
 
 @app.route("/catalog")
 def catalog():
     light_room = LightRoomRestApi(api_config=app.config)
     catalog = light_room.get_catalog()
 
-    return catalog.model_dump_json()
+    return catalog.model_dump()
+
 
 @app.route("/assets")
 def assets():
     light_room = LightRoomRestApi(api_config=app.config)
     catalog = light_room.get_catalog()
-    assets = light_room.get_assets(
-        catalog_id=catalog.id
+    assets = light_room.get_assets(catalog_id=catalog.id)
+    renderer = AssetCollectionRenderer(
+        api_config=app.config, collection=assets
     )
-    renderer = AssetCollectionRenderer(api_config=app.config, collection=assets)
-    image_urls = renderer.get_renditions().save_images()
+    # ratings = renderer.get_ratings()
+    renditions = renderer.get_renditions()
+    #     )
+    # TODO: fix json model dump
 
     return flask.render_template(
-            "display_images.html",
-            image_urls=image_urls,
-        )
+        "display_images.html", assets=renditions.resources
+    )
+
 
 @app.route("/health")
 def health():
     light_room = LightRoomRestApi(api_config=app.config)
 
     return flask.render_template(
-                "index.html",
-                response=f"health status: {light_room._check_health_status()}",
-            )
+        "index.html",
+        response=(
+            f"health status: {light_room._check_health_status()}"
+        ),
+    )
 
 
 if __name__ == "__main__":
