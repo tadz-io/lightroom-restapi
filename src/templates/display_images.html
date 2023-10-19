@@ -13,7 +13,14 @@
         {% for asset in assets %}
             <figure class="image_container">
                 <img src="{{ url_for('static', filename=asset.rendition_url) }}" alt="Image">
-                <figcaption>{{ asset.payload.get_rating() }}</figcaption>
+                <figcaption>
+                    {% for _ in range(asset.payload.get_rating()) %}
+                        <span class="star-rating">&#9733;</span>
+                    {% endfor %}
+                    {% for _ in range(5 - asset.payload.get_rating()) %}
+                        <span class="dot-rating">&#183;</span>
+                    {% endfor %}
+                </figcaption>
             </figure>
         {% endfor %}
     </div>
