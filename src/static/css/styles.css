@@ -34,7 +34,7 @@ figure.image_container figcaption {
     color: gold; /* Adjust the color as needed */
 }
 
-.dot-rating {
+.empty-star {
     font-size: 18px; /* Adjust the font size as needed */
-    color: grey; /* Adjust the color as needed */
+    color: grey;
 }

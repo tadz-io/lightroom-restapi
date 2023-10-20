@@ -18,7 +18,7 @@
                         <span class="star-rating">&#9733;</span>
                     {% endfor %}
                     {% for _ in range(5 - asset.payload.get_rating()) %}
-                        <span class="dot-rating">&#183;</span>
+                        <span class="empty-star">&#9733;</span>
                     {% endfor %}
                 </figcaption>
             </figure>
