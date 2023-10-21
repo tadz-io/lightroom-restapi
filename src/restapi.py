@@ -5,7 +5,7 @@ import flask
 from dataclasses import dataclass
 from pydantic import BaseModel
 import json
-from typing import Literal, Dict, Optional
+from typing import Literal, Dict, Optional, List
 
 
 class UserSession(BaseModel):
@@ -56,7 +56,25 @@ class AssetColletion(BaseModel):
     base: str = None
     last_updated: str = None
     links: dict = None
-    resources: list[Asset] = None
+    resources: List[Asset] = None
+
+
+class Album(BaseModel):
+    id: str = None
+    created: str = None
+    updated: str = None
+
+
+class AlbumCollection(BaseModel):
+    base: str = None
+    resources: List[Album] = None
+
+
+class AlbumAssets(BaseModel):
+    base: str = None
+    album: dict = None
+    resources: List[Asset] = None
+
 
 
 def load_from_session() -> UserSession:
@@ -91,6 +109,22 @@ class LightRoomRestApi:
         json_response = self._to_json(response.text)
         # return json_response
         return Catalog.model_validate(json_response)
+
+    def retrieve_albums(self, catalog_id):
+        url = os.path.join(
+            self._base_url, f"catalogs/{catalog_id}/albums"
+            )
+        response = requests.get(url, headers=self._api_credentials)
+        json_response = self._to_json(response.text)
+        return AlbumCollection.model_validate(json_response)
+    
+    def get_album_assets(self, catalog_id, album_id):
+        url = os.path.join(
+            self._base_url, f"catalogs/{catalog_id}/albums/{album_id}/assets"
+        )
+        response = requests.get(url, headers=self._api_credentials)
+        json_response = self._to_json(response.text)
+        return AlbumAssets.model_validate(json_response)
 
     def get_assets(self, catalog_id):
         url = os.path.join(
@@ -143,13 +177,16 @@ class AssetCollectionRenderer:
 
     def save_images(self, response, filename):
         file_path = f"{filename}.jpg"
-        with open(os.path.join("static", file_path), "wb") as img_file:
+        with open(
+            os.path.join("static", file_path), "wb"
+        ) as img_file:
             img_file.write(response.content)
         return file_path
-    
-    def get_ratings(self):
-        ratings = []
+
+    def rating_stats(self):
+        ratings = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
         for asset in self._collection.resources:
             rating = asset.payload.get_rating()
-            ratings.append({asset.id: rating})
+            if rating in ratings:
+                ratings[rating] += 1
         return ratings
