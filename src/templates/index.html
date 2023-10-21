@@ -14,9 +14,35 @@
                 <button onclick="location.href='/account'">Account details</button>
                 <button onclick="location.href='/catalog'">Catalog</button>
                 <button onclick="location.href='/assets'">Assets</button>
+                <button onclick="location.href='/albums'">Albums</button>
+                <button onclick="location.href='/stats'">Stats</button>
         </div>
         <div>
                 {{ response }}
+        </div>
+        <div>
+                {% if rating_counts is defined %}
+                <table>
+                        <thead>
+                        <tr>
+                                <th>Rating</th>
+                                <th>Count</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for rating, count in rating_counts.items() %}
+                        <tr>
+                                <td>
+                                        {% for _ in range(rating) %}
+                                                *
+                                        {% endfor %}
+                                </td>
+                                <td>{{ count }}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                </table>
+                {% endif %}
         </div>
 </body>
 </html>

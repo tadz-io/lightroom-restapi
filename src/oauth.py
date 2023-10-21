@@ -100,6 +100,7 @@ def catalog():
     light_room = LightRoomRestApi(api_config=app.config)
     catalog = light_room.get_catalog()
 
+    # return jsonify(catalog)
     return catalog.model_dump()
 
 
@@ -119,6 +120,44 @@ def assets():
     return flask.render_template(
         "display_images.html", assets=renditions.resources
     )
+
+
+@app.route("/stats")
+def stats():
+    light_room = LightRoomRestApi(api_config=app.config)
+    catalog = light_room.get_catalog()
+    assets = light_room.get_assets(catalog_id=catalog.id)
+    albums = light_room.retrieve_albums(catalog_id=catalog.id)
+    album_ids = [album.id for album in albums.resources]
+    album_assets = [
+        len(
+            light_room.get_album_assets(
+                catalog_id=catalog.id, album_id=album_id
+            ).resources
+        )
+        for album_id in album_ids
+    ]
+
+    # renderer = AssetCollectionRenderer(
+    #     api_config=app.config, collection=assets
+    # )
+
+    return flask.render_template(
+        "index.html", rating_counts={0: album_assets}
+    )
+
+
+@app.route("/albums")
+def albums():
+    light_room = LightRoomRestApi(api_config=app.config)
+    catalog = light_room.get_catalog()
+    albums = light_room.retrieve_albums(catalog_id=catalog.id)
+    album_id = albums.resources[0].id
+    album_assets = light_room.get_album_assets(
+        catalog_id=catalog.id, album_id=album_id
+    )
+
+    return albums.model_dump()
 
 
 @app.route("/health")
